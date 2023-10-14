@@ -22,7 +22,9 @@ import org.apache.lucene.store.FSDirectory;
 public class LuceneReadIndexFeature_1 {
     private static final String INDEX_DIR = "indexedFiles";
     private static IndexSearcher searcher;
-
+    private static int titleLength = 50;
+    private static int contentLength = 20;
+    
     public static void main(String[] args) throws Exception {
         // Create Lucene searcher. It searches over a single IndexReader.
         searcher = createSearcher();
@@ -59,10 +61,15 @@ public class LuceneReadIndexFeature_1 {
                 String searchQuery = textField.getText();
                 try {
                     TopDocs foundDocs = searchInContent(searchQuery, searcher);
+                    System.out.println(foundDocs.scoreDocs.length);
                     resultArea.setText("Total Results :: " + foundDocs.totalHits + "\n");
                     for (ScoreDoc sd : foundDocs.scoreDocs) {
+                    	
                         Document d = searcher.doc(sd.doc);
-                        resultArea.append("Path: " + d.get("path") + ", Score: " + sd.score + "\n");
+                        resultArea.append("Path: " + d.get("path") + ", \tScore: " + sd.score + "\n");
+//                        resultArea.append(d.get("title").substring(0, titleLength));
+                        resultArea.append(d.get("contents").substring(0,contentLength));
+//                        resultArea.append(d.get("content").substring(0, contentLength));
                     }
                 } catch (Exception ex) {
                     resultArea.setText("An error occurred: " + ex.getMessage());
@@ -93,4 +100,5 @@ public class LuceneReadIndexFeature_1 {
         IndexReader reader = DirectoryReader.open(dir);
         return new IndexSearcher(reader);
     }
+    
 }
