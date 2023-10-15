@@ -18,7 +18,6 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.analysis.Analyzer;
 
 public class Hsample {
     private static final String INDEX_DIR = "indexedFiles";
@@ -78,7 +77,7 @@ public class Hsample {
                         }
 
                         // Append the results to the result area
-                        resultArea.append("Abstract: " + abstractText + "file name is " + path + "\n----------------\n");
+                        resultArea.append("Result: " + abstractText + "file name is " + getfilenamefrompath(path) + "\n----------------\n");
                     }
                 } catch (Exception ex) {
                     resultArea.setText("An error occurred: " + ex.getMessage());
@@ -96,7 +95,7 @@ public class Hsample {
         // Set frame visibility and center on screen
         frame.setVisible(true);
         frame.setLocationRelativeTo(null);
-        search(INDEX_DIR, resultArea);
+        //search(INDEX_DIR, resultArea);
     }
 
     private static TopDocs searchInContent(String textToFind, IndexSearcher searcher) throws Exception {
@@ -111,33 +110,13 @@ public class Hsample {
         return new IndexSearcher(reader);
     }
 
-    public static void search(String indexpath, JTextArea resultArea) throws Exception {
-        String index = indexpath;
-        IndexReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(index)));
-        IndexSearcher searcher = new IndexSearcher(reader);
-        Analyzer analyzer = new StandardAnalyzer();
-        QueryParser parser = new QueryParser("contents", analyzer);
-        Query query = parser.parse("George J. Pappas");
-        TopDocs results = searcher.search(query, 5);
-        resultArea.append(results.totalHits + " total matching documents\n");
-        for (int i = 0; i < 5; i++) {
-            Document doc = searcher.doc(results.scoreDocs[i].doc);
-            String path = doc.get("path");
-            //String title = doc.get("title");
-            String contents = doc.get("contents");
-            String searchstring = contents.toLowerCase(); //lower case contents
-            int start = searchstring.indexOf("abstract");
-            int end = searchstring.indexOf("introduction");
-            String abstractText = "";
-            if (start > 0 && end > start) {
-                abstractText = contents.substring(start, end);
-            } else {
-                abstractText = "Abstract not found";
-            }
-
-            // Append the results to the result area
-            resultArea.append("Abstract: " + abstractText + "file name is " + path + "\n----------------\n");
-        }
-        reader.close();
+    public static String getfilenamefrompath(String input) {
+        
+        String pattern = "\\d+.txt";
+        //Boolean b = Pattern.matches(pattern,input);
+        String[] arrOfStr = input.split(pattern);
+        String retval = input.replace(arrOfStr[0],"").replace(".txt","");
+        //for (String a : arrOfStr)
+        return retval;
     }
 }
