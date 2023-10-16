@@ -58,6 +58,8 @@ public class LuceneReadIndexFeature1 {
     private int resultAreaLength = 50;
     private int titleLength = 40;
     private int contentLength = 30;
+    // The content length of the list items in the JList
+    private int listItemContentLength = 50;
     
     // for ActionListener Sections
     private String searchQuery;
@@ -137,7 +139,9 @@ public class LuceneReadIndexFeature1 {
         for (ScoreDoc sd : foundDocs.scoreDocs) {
             Document document = searcher.doc(sd.doc);
             // This will have to be replaced by the actual matching content in the document
-            topResultsText[i] = "Path: " + document.get("path") + ", \tScore: " + sd.score + "\n";
+            //topResultsText[i] = "Path: " + document.get("path") + ", \tScore: " + sd.score + "\n";
+            // each topResultsText[i] should now show the portion of Abstracts of the papers and the file name
+            topResultsText[i] = findSection("abstract", "introduction", document).substring(0, listItemContentLength) + "\n";
             resultDocuments[i++] = document.get("contents").toString();
             System.out.println("topResultsText[" + (i - 1) + "] = " + topResultsText[i - 1]);
         }
@@ -224,7 +228,7 @@ public class LuceneReadIndexFeature1 {
     
     private void updateSuggestions() {
     	String query = tfSearch.getText();
-        List<Lookup.LookupResult> results = suggester.lookup(query, false, maxSuggestions);
+        //List<Lookup.LookupResult> results = suggester.lookup(query, false, maxSuggestions);
         // Update your UI with the results
     }
     
