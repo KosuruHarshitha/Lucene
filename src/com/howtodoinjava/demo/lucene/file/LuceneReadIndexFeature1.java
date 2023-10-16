@@ -173,7 +173,8 @@ public class LuceneReadIndexFeature1 {
             subTmpSection = tmpSection.substring(0, Math.min(listItemContentLength, tmpSection.length()));
             System.out.println("subTmpSection = " + subTmpSection);
             String keywordsString = getKeywords(document.get("contents"));
-            topResultsText[i] = keywordsString + subTmpSection + "\nFile #" + (i + 1) + " : " + getFilenameFromPath(path);
+            //topResultsText[i] = keywordsString + subTmpSection + "\nFile #" + (i + 1) + " : " + getFilenameFromPath(path);
+            topResultsText[i] = "<html>" + keywordsString + "<br>" + subTmpSection + "<br>File #" + (i + 1) + " : " + getFilenameFromPath(path)+ "</html>";
             resultDocuments[i++] = document.get("contents").toString();
             System.out.println("topResultsText[" + (i - 1) + "] = " + topResultsText[i - 1]);
         }
@@ -226,7 +227,7 @@ public class LuceneReadIndexFeature1 {
             }
             }
             System.out.println("Key words in the paper: \n"+ terms.toString());
-            String returnString = "Frequent words in the paper: \n"+ terms.toString();
+            String returnString = "Frequent words : \n"+ terms.toString();
             return returnString;
             //String s = terms.entrySet().stream().map(Object::toString).collect(joining("&"));
         }
