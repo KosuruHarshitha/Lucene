@@ -63,7 +63,7 @@ public class Searcher {
      
     public static String getKeywords(String content) throws IOException {
         final List<String> stopwords;
-        stopwords = Files.readAllLines(Paths.get("resources/english_stopwords.txt"));
+        stopwords = Files.readAllLines(Paths.get("/english_stopwords.txt"));
         String stopwordsRegex = stopwords.stream()
             .collect(Collectors.joining("|", "\\b(", ")\\b\\s?"));
         String refined = content.replaceAll("[^a-zA-Z]", " ");
