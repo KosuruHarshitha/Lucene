@@ -4,6 +4,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseAdapter;
 import java.io.IOException;
 import java.nio.file.Paths;
 
@@ -24,7 +27,7 @@ import com.jgoodies.forms.layout.RowSpec;
 import com.jgoodies.forms.layout.FormSpecs;
 import javax.swing.GroupLayout.Alignment;
 
-public class LuceneReadIndexFeature_1_GUI2 {
+public class LuceneReadIndexFeature1 {
 	//Lucene search components
     private final String INDEX_DIR = "indexedFiles";
     private final int numTopHits = 10;
@@ -47,12 +50,18 @@ public class LuceneReadIndexFeature_1_GUI2 {
     private int contentLength = 30;
     
     // for ActionListener Sections
-    String searchQuery;
-    String targetSection = "abstract";
-    String latterSection = "introduction";
-    String mainResultText = "";
-    String[] topResultsText = new String[numTopHits];
-    String section = "";
+    private String searchQuery;
+    private String targetSection = "abstract";
+    private String latterSection = "introduction";
+    private String mainResultText = "";
+    private String[] topResultsText = new String[numTopHits];
+    private String section = "";
+    // Storing the entire "contents" of the particular documents by list
+    private String[] resultDocuments;
+    // the total result documents got from the query
+    private TopDocs foundDocs;
+    
+    // More GUI elements
     private JPanel panelSearchParent;
     private JLabel lblSearchPanel;
     private JTextField tfSearch;
@@ -60,6 +69,9 @@ public class LuceneReadIndexFeature_1_GUI2 {
     private JPanel panelResultParent;
     private JPanel panelResultChild2;
     private JList listResults;
+    private JPanel panelResultChild1;
+    private JTextArea detailedResults;
+    private JScrollPane spDetailedResults;
     
     // Lucene methods
     public void initLucene() throws IOException {
@@ -80,9 +92,9 @@ public class LuceneReadIndexFeature_1_GUI2 {
     }
     
     // Finds the appropriate section of the resultDocument considering the given strings as correct ones
-    private String findSection(String targetSection, String latterSection, Document resultDocument){
+    private String findSection(String targetSection, String latterSection, Document resultDoc){
     	String section = "";
-    	result = resultDocument.get("contents").toLowerCase();
+    	result = resultDoc.get("contents").toLowerCase();
     	int start = result.indexOf(targetSection);
     	int end = result.indexOf(latterSection);
     	System.out.println("The substring start and end is : " + start + " , " + end);
@@ -98,16 +110,19 @@ public class LuceneReadIndexFeature_1_GUI2 {
     	searchQuery = tfSearch.getText();
     	System.out.println("searchQuery = " + searchQuery);
     	
-    	TopDocs foundDocs = searchInContent(searchQuery, searcher);
+    	foundDocs = searchInContent(searchQuery, searcher);
         System.out.println(foundDocs.scoreDocs.length);
         mainResultText = "Total Number of Results : " + foundDocs.totalHits + "\n";
         System.out.println(mainResultText);
+        // store the result documents in a vector for later access to the contents by index
+        resultDocuments = new String[numTopHits];
         
         // Take each row for the short results list
         for (ScoreDoc sd : foundDocs.scoreDocs) {
             Document document = searcher.doc(sd.doc);
             // This will have to be replaced by the actual matching content in the document
-            topResultsText[i++] = "Path: " + document.get("path") + ", \tScore: " + sd.score + "\n";
+            topResultsText[i] = "Path: " + document.get("path") + ", \tScore: " + sd.score + "\n";
+            resultDocuments[i++] = document.get("contents").toString();
             System.out.println("topResultsText[" + (i - 1) + "] = " + topResultsText[i - 1]);
         }
     }
@@ -146,8 +161,8 @@ public class LuceneReadIndexFeature_1_GUI2 {
     	frame.getContentPane().add(panelResultParent);
     	panelResultParent.setLayout(null);
     	
-    	JPanel panelResultChild1 = new JPanel();
-    	panelResultChild1.setBackground(new Color(192, 223, 233));
+    	panelResultChild1 = new JPanel();
+    	panelResultChild1.setBackground(SystemColor.inactiveCaption);
     	panelResultChild1.setBounds(0, 0, 293, 372);
     	panelResultParent.add(panelResultChild1);
     	panelResultChild1.setLayout(null);
@@ -157,9 +172,17 @@ public class LuceneReadIndexFeature_1_GUI2 {
     	panelResultChild1.add(listResults);
     	
     	panelResultChild2 = new JPanel();
-    	panelResultChild2.setBackground(new Color(240, 240, 240));
+    	panelResultChild2.setBackground(SystemColor.inactiveCaption);
     	panelResultChild2.setBounds(291, 0, 293, 372);
     	panelResultParent.add(panelResultChild2);
+    	panelResultChild2.setLayout(null);
+    	
+    	spDetailedResults = new JScrollPane();
+    	spDetailedResults.setBounds(10, 11, 273, 350);
+    	panelResultChild2.add(spDetailedResults);
+    	
+    	detailedResults = new JTextArea();
+    	spDetailedResults.setViewportView(detailedResults);
     	frame.setVisible(true);
     }
     
@@ -184,7 +207,7 @@ public class LuceneReadIndexFeature_1_GUI2 {
     	}
     }
     
-    public void addActionListeners() {
+    private void addActionListeners() {
         
         // CLickable result link button (leading to the details of a result)
     	btnSearch.addActionListener(new ActionListener() {
@@ -193,14 +216,33 @@ public class LuceneReadIndexFeature_1_GUI2 {
             	// with the press of the search button, all the subsequent sections will change
                 try {
                     collectQueryResults();
-                    //tpMainResultText.setText(mainResultText);
                     // populate JList with the results
                     populateResultList();
+                    // Makes the JList to read the mouse click on individual search result for a detailed view
+                    addMouseListenerToList();
                 } catch (Exception ex) {
                     System.out.println("An error occurred: " + ex.getMessage());
                 }
             }
         });
+    }
+    
+    // MouseListener for the JList
+    private void addMouseListenerToList() {
+    	listResults.addMouseListener(new MouseAdapter() {
+    		public void mouseClicked(MouseEvent mouseEvent) {
+    			JList <String> tmpList  = (JList) mouseEvent.getSource();
+    			if (mouseEvent.getClickCount() == 2) {
+    				int index = tmpList.locationToIndex(mouseEvent.getPoint());
+    				if (index >= 0) {
+    					Object singleResult = tmpList.getModel().getElementAt(index);
+    					// Append to the detailedResults Section
+    					detailedResults.setText(resultDocuments[index]);
+    					System.out.println("Double-clicked on: " + singleResult.toString());
+    				}
+    			}
+    		}
+    	});
     }
     
     // template method to generate and show a gui
@@ -217,7 +259,7 @@ public class LuceneReadIndexFeature_1_GUI2 {
     }
     
     public static void main(String[] args) throws Exception{
-    	LuceneReadIndexFeature_1_GUI2 lucene = new LuceneReadIndexFeature_1_GUI2();
+    	LuceneReadIndexFeature1 lucene = new LuceneReadIndexFeature1();
     	
     	// Create Lucene searcher. It searches over a single IndexReader.
         lucene.initLucene();
