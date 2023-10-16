@@ -18,7 +18,6 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.analysis.Analyzer;
 
 public class Hsample {
     private static final String INDEX_DIR = "indexedFiles";
@@ -60,10 +59,25 @@ public class Hsample {
                 String searchQuery = textField.getText();
                 try {
                     TopDocs foundDocs = searchInContent(searchQuery, searcher);
-                    resultArea.setText("Total Results :: " + foundDocs.totalHits + "\n");
+                    resultArea.setText(""); // Clear previous results
+                    resultArea.append("Total Results :: " + foundDocs.totalHits + "\n");
                     for (ScoreDoc sd : foundDocs.scoreDocs) {
                         Document d = searcher.doc(sd.doc);
-                        resultArea.append("Path: " + d.get("path") + ", Score: " + sd.score + "\n");
+                        String path = d.get("path");
+                        //String title = d.get("title");
+                        String contents = d.get("contents");
+                        String searchstring = contents.toLowerCase(); //lower case contents
+                        int start = searchstring.indexOf("abstract");
+                        int end = searchstring.indexOf("introduction");
+                        String abstractText = "";
+                        if (start > 0 && end > start) {
+                            abstractText = contents.substring(start, end);
+                        } else {
+                            abstractText = "Abstract not found " ;
+                        }
+
+                        // Append the results to the result area
+                        resultArea.append("Result: " + abstractText + "file name is " + getfilenamefrompath(path) + "\n----------------\n");
                     }
                 } catch (Exception ex) {
                     resultArea.setText("An error occurred: " + ex.getMessage());
@@ -81,7 +95,7 @@ public class Hsample {
         // Set frame visibility and center on screen
         frame.setVisible(true);
         frame.setLocationRelativeTo(null);
-        Search(INDEX_DIR);
+        //search(INDEX_DIR, resultArea);
     }
 
     private static TopDocs searchInContent(String textToFind, IndexSearcher searcher) throws Exception {
@@ -95,38 +109,14 @@ public class Hsample {
         IndexReader reader = DirectoryReader.open(dir);
         return new IndexSearcher(reader);
     }
-    
-    	public static void Search(String indexpath) throws Exception {
-    		String index = indexpath;
-    		IndexReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(index)));
-    		IndexSearcher searcher = new IndexSearcher(reader);
-    		Analyzer analyzer = new StandardAnalyzer();
-    		QueryParser parser = new QueryParser("contents", analyzer);
-    		Query query = parser.parse("George J. Pappas");
-    		TopDocs results = searcher.search(query, 5);
-    		System.out.println(results.totalHits + " total matching documents");
-    		for (int i = 0; i < 5; i++) {
-    			Document doc = searcher.doc(results.scoreDocs[i].doc);
-    			String path = doc.get("path");
-    			//System.out.println((i + 1) + ". " + path);
-    			String title = doc.get("title");
-    			String contents = doc.get("contents");
-    			String searchstring = contents.toLowerCase(); //lower case contents
-    			int start = searchstring.indexOf("abstract");
-    			int end = searchstring.indexOf("introduction");
-    			String Abstract = "";
-    			if (start > 0 && end > start) {
-    				Abstract = contents.substring(start, end);
-    			} else {
-    				Abstract = "not found " + "path: " + path ;
-    			}
-    				
-    			//if (title != null) {
-    				//System.out.println("   Title: " + doc.get("title"));
-    			//}
-    			System.out.println("   Contents: " + Abstract + "\n");
-    		}
-    		reader.close();
-    	}
-    
+
+    public static String getfilenamefrompath(String input) {
+        
+        String pattern = "\\d+.txt";
+        //Boolean b = Pattern.matches(pattern,input);
+        String[] arrOfStr = input.split(pattern);
+        String retval = input.replace(arrOfStr[0],"").replace(".txt","");
+        //for (String a : arrOfStr)
+        return retval;
+    }
 }
