@@ -19,6 +19,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import com.jgoodies.forms.layout.FormLayout;
@@ -26,12 +27,15 @@ import com.jgoodies.forms.layout.ColumnSpec;
 import com.jgoodies.forms.layout.RowSpec;
 import com.jgoodies.forms.layout.FormSpecs;
 import javax.swing.GroupLayout.Alignment;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import com.howtodoinjava.demo.lucene.gui.*;
 
 public class LuceneReadIndexFeature1 {
 	//Lucene search components
     private final String INDEX_DIR = "indexedFiles";
+    private final String INDEX_DIR_SUGGESTER = "suggesterIndexedFiles";
     private final int numTopHits = 10;
     private final int resultListSize = 10;
     private IndexSearcher searcher;
@@ -82,6 +86,12 @@ public class LuceneReadIndexFeature1 {
     // Lucene methods
     public void initLucene() throws IOException {
     	searcher = createSearcher();
+    }
+    
+    // Create Index for the suggester
+    private void createSuggesterIndex() {
+    	StandardAnalyzer analyzer = new StandardAnalyzer();
+    	//AnalyzingSuggester suggester = new AnalyzingSuggester(indexDir, analyzer);
     }
     
     // Create the IndexSearcher
@@ -212,9 +222,37 @@ public class LuceneReadIndexFeature1 {
     	listResults.setListData(topResultsText);
     }
     
+    private void updateSuggestions() {
+    	String query = tfSearch.getText();
+        List<Lookup.LookupResult> results = suggester.lookup(query, false, maxSuggestions);
+        // Update your UI with the results
+    }
+    
     // Add all the actionListeners and Eventhandlers when needed or interacted
     private void addActionListeners() {
-        
+    	
+        // Add documentListener for the Search bar
+    	tfSearch.getDocument().addDocumentListener(new DocumentListener() {
+			
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				// TODO Auto-generated method stub
+				updateSuggestions();
+			}
+			
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				// TODO Auto-generated method stub
+				updateSuggestions();
+			}
+			
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+    	
         // CLickable result link button (leading to the details of a result)
     	btnSearch.addActionListener(new ActionListener() {
             @Override
