@@ -52,8 +52,8 @@ public class LuceneReadIndexFeature1 {
     private int screenWidth, screenHeight;
     // the X,Y for centering the JFrame
     private int centerX, centerY;
-    private final int frameWidth = 600;
-    private final int frameHeight = 450; 
+    private final int frameWidth = 977;
+    private final int frameHeight = 682; 
     private int lineLength = 30;
     private int resultAreaLength = 50;
     private int titleLength = 40;
@@ -84,6 +84,7 @@ public class LuceneReadIndexFeature1 {
     private JPanel panelResultChild1;
     private JTextArea detailedResults;
     private JScrollPane spDetailedResults;
+    private JScrollPane spListResults;
     
     // Lucene methods
     public void initLucene() throws IOException {
@@ -130,6 +131,7 @@ public class LuceneReadIndexFeature1 {
         //Boolean b = Pattern.matches(pattern,input);
         String[] arrOfStr = input.split(pattern);
         String retval = input.replace(arrOfStr[0],"").replace(".txt","");
+        System.out.println("The fetched filename is : " + retval);
         //for (String a : arrOfStr)
         return retval;
     }
@@ -182,46 +184,51 @@ public class LuceneReadIndexFeature1 {
     	frame.getContentPane().setLayout(null);
     	
     	panelSearchParent = new JPanel();
-    	panelSearchParent.setBounds(0, 0, 584, 39);
+    	panelSearchParent.setBounds(0, 0, 961, 38);
     	frame.getContentPane().add(panelSearchParent);
     	
     	lblSearchPanel = new JLabel("Enter Query Text");
-    	lblSearchPanel.setFont(new Font("Tahoma", Font.BOLD, 11));
+    	lblSearchPanel.setFont(new Font("Tahoma", Font.BOLD, 12));
     	lblSearchPanel.setHorizontalAlignment(SwingConstants.LEFT);
     	panelSearchParent.add(lblSearchPanel);
     	
     	tfSearch = new JTextField();
-    	tfSearch.setColumns(lineLength);
+    	tfSearch.setColumns(50);
     	panelSearchParent.add(tfSearch);
     	
     	btnSearch = new JButton("Search");
+    	btnSearch.setFont(new Font("Tahoma", Font.PLAIN, 12));
     	panelSearchParent.add(btnSearch);
     	
     	panelResultParent = new JPanel();
-    	panelResultParent.setBounds(0, 38, 584, 372);
+    	panelResultParent.setBounds(0, 38, 961, 605);
     	frame.getContentPane().add(panelResultParent);
     	panelResultParent.setLayout(null);
     	
     	panelResultChild1 = new JPanel();
     	panelResultChild1.setBackground(SystemColor.inactiveCaption);
-    	panelResultChild1.setBounds(0, 0, 293, 372);
+    	panelResultChild1.setBounds(0, 0, 479, 605);
     	panelResultParent.add(panelResultChild1);
     	panelResultChild1.setLayout(null);
     	
+    	spListResults = new JScrollPane();
+    	spListResults.setBounds(10, 11, 459, 583);
+    	panelResultChild1.add(spListResults);
+    	
     	listResults = new JList();
-    	listResults.setCellRenderer(new CustomListCellRenderer());
-    	listResults.setBounds(10, 11, 273, 350);
-    	panelResultChild1.add(listResults);
+    	spListResults.setViewportView(listResults);
+    	//listResults.setCellRenderer(new CustomListCellRenderer());
+    	listResults.setCellRenderer(new MultilineListCellRenderer());
     	
     	panelResultChild2 = new JPanel();
     	panelResultChild2.setBackground(SystemColor.inactiveCaption);
-    	panelResultChild2.setBounds(291, 0, 293, 372);
+    	panelResultChild2.setBounds(477, 0, 484, 605);
     	panelResultParent.add(panelResultChild2);
     	panelResultChild2.setLayout(null);
     	
     	spDetailedResults = new JScrollPane();
     	spDetailedResults.setBorder(null);
-    	spDetailedResults.setBounds(10, 11, 273, 350);
+    	spDetailedResults.setBounds(10, 11, 464, 583);
     	panelResultChild2.add(spDetailedResults);
     	
     	detailedResults = new JTextArea();
