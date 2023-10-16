@@ -27,6 +27,8 @@ import com.jgoodies.forms.layout.RowSpec;
 import com.jgoodies.forms.layout.FormSpecs;
 import javax.swing.GroupLayout.Alignment;
 
+import com.howtodoinjava.demo.lucene.gui.*;
+
 public class LuceneReadIndexFeature1 {
 	//Lucene search components
     private final String INDEX_DIR = "indexedFiles";
@@ -42,8 +44,12 @@ public class LuceneReadIndexFeature1 {
     private JFrame frame;
     
     // GUI elements properties
-    private int frameWidth = 600;
-    private int frameHeight = 450; 
+    private Dimension screenDimension;
+    private int screenWidth, screenHeight;
+    // the X,Y for centering the JFrame
+    private int centerX, centerY;
+    private final int frameWidth = 600;
+    private final int frameHeight = 450; 
     private int lineLength = 30;
     private int resultAreaLength = 50;
     private int titleLength = 40;
@@ -133,11 +139,19 @@ public class LuceneReadIndexFeature1 {
     
     // Create the GUI and add components
     public void initGUI() {
+    	// get the device's screen dimensions
+    	screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
+    	screenWidth = (int) screenDimension.getWidth();
+    	screenHeight = (int) screenDimension.getHeight();
+    	centerX = (int)(screenWidth / 2) - (int) (frameWidth / 2);
+    	centerY = (int)(screenHeight / 2) - (int) (frameHeight / 2);
+    	
     	// Create and set up the GUI frame
         frame = new JFrame("Lucene Search");
         frame.setSize(new Dimension(frameWidth, frameHeight));
     	frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     	frame.getContentPane().setSize(frameWidth, frameHeight);
+    	frame.setLocation(centerX, centerY);
     	frame.getContentPane().setLayout(null);
     	
     	panelSearchParent = new JPanel();
@@ -168,6 +182,7 @@ public class LuceneReadIndexFeature1 {
     	panelResultChild1.setLayout(null);
     	
     	listResults = new JList();
+    	listResults.setCellRenderer(new CustomListCellRenderer());
     	listResults.setBounds(10, 11, 273, 350);
     	panelResultChild1.add(listResults);
     	
@@ -178,19 +193,13 @@ public class LuceneReadIndexFeature1 {
     	panelResultChild2.setLayout(null);
     	
     	spDetailedResults = new JScrollPane();
+    	spDetailedResults.setBorder(null);
     	spDetailedResults.setBounds(10, 11, 273, 350);
     	panelResultChild2.add(spDetailedResults);
     	
     	detailedResults = new JTextArea();
+    	detailedResults.setBorder(null);
     	spDetailedResults.setViewportView(detailedResults);
-    	frame.setVisible(true);
-    }
-    
-    public void showGUI() {
-    	// Collect the data for showing 
-    	
-    	
-    	frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     	frame.setVisible(true);
     }
     
@@ -201,12 +210,9 @@ public class LuceneReadIndexFeature1 {
     // populate the JList with the short result rows
     private void populateResultList() {
     	listResults.setListData(topResultsText);
-    	for(int i = 0; i < resultListSize; i++) {
-    		// Edit the JButtons in the list and make them visible
-    		
-    	}
     }
     
+    // Add all the actionListeners and Eventhandlers when needed or interacted
     private void addActionListeners() {
         
         // CLickable result link button (leading to the details of a result)
@@ -227,7 +233,7 @@ public class LuceneReadIndexFeature1 {
         });
     }
     
-    // MouseListener for the JList
+    // MouseListener for the resultJList
     private void addMouseListenerToList() {
     	listResults.addMouseListener(new MouseAdapter() {
     		public void mouseClicked(MouseEvent mouseEvent) {
@@ -253,9 +259,6 @@ public class LuceneReadIndexFeature1 {
         // Add Action / Event Listeners
         addActionListeners();
         
-        // View the GUI
-        //showGUI();
-        
     }
     
     public static void main(String[] args) throws Exception{
@@ -268,6 +271,5 @@ public class LuceneReadIndexFeature1 {
         lucene.initGUI();
         // Add ActionListeners and edit GUI as needed
         lucene.addActionListeners();
-        lucene.showGUI();
     }
 }
