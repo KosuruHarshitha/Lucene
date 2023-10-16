@@ -59,7 +59,7 @@ public class LuceneReadIndexFeature1 {
     private int titleLength = 40;
     private int contentLength = 30;
     // The content length of the list items in the JList
-    private int listItemContentLength = 50;
+    private int listItemContentLength = 20;
     
     // for ActionListener Sections
     private String searchQuery;
@@ -116,10 +116,22 @@ public class LuceneReadIndexFeature1 {
     	int start = result.indexOf(targetSection);
     	int end = result.indexOf(latterSection);
     	System.out.println("The substring start and end is : " + start + " , " + end);
-    	if(start >= 0 && end >= 0) {
+    	if(start >= 0 && end > start) {
     		section = result.substring(start, end);
     	}
+    	else if(end < 0) {
+    		section = result.substring(start, start + 200);
+    	}
     	return section;
+    }
+    
+    private String getFilenameFromPath(String input) {
+        String pattern = "\\d+.txt";
+        //Boolean b = Pattern.matches(pattern,input);
+        String[] arrOfStr = input.split(pattern);
+        String retval = input.replace(arrOfStr[0],"").replace(".txt","");
+        //for (String a : arrOfStr)
+        return retval;
     }
     
     // Main processing of the query results for the GUI actions
@@ -138,10 +150,11 @@ public class LuceneReadIndexFeature1 {
         // Take each row for the short results list
         for (ScoreDoc sd : foundDocs.scoreDocs) {
             Document document = searcher.doc(sd.doc);
+            String path = document.get("path");
             // This will have to be replaced by the actual matching content in the document
-            //topResultsText[i] = "Path: " + document.get("path") + ", \tScore: " + sd.score + "\n";
+            topResultsText[i] = "Path: " + document.get("path") + ", \tScore: " + sd.score + "\n";
             // each topResultsText[i] should now show the portion of Abstracts of the papers and the file name
-            topResultsText[i] = findSection("abstract", "introduction", document).substring(0, listItemContentLength) + "\n";
+            //topResultsText[i] = findSection("abstract", "introduction", document).substring(0, listItemContentLength) + "\nFile #" + (i + 1) + " : " + getFilenameFromPath(path);
             resultDocuments[i++] = document.get("contents").toString();
             System.out.println("topResultsText[" + (i - 1) + "] = " + topResultsText[i - 1]);
         }
