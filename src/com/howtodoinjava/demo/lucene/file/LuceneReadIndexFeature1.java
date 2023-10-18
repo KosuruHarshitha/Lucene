@@ -17,9 +17,6 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
@@ -35,8 +32,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
@@ -179,57 +179,67 @@ public class LuceneReadIndexFeature1 {
             System.out.println("topResultsText[" + (i - 1) + "] = " + topResultsText[i - 1]);
         }
     }
-    public static String getKeywords(String content) throws IOException {
+    public static String getKeywords(String docs) throws IOException {
         final List<String> stopwords;
+        System.out.println("Entering getKeywords - after for");
         stopwords = Files.readAllLines(Paths.get("resources\\english_stopwords.txt"));
         String stopwordsRegex = stopwords.stream()
             .collect(Collectors.joining("|", "\\b(", ")\\b\\s?"));
-        String refined = content.replaceAll("[^a-zA-Z]", " ");
+        String refined = docs.replaceAll("[^a-zA-Z]", " ");
         String result = refined.toLowerCase().replaceAll(stopwordsRegex, " ");
-        HashMap<String, Integer> res = ngrams(result.toString(),3); 
-        res.remove(" ");
-        List<String> resKeys = new ArrayList<String>(res.keySet());
-        Integer lenOfres = resKeys.size();
-        for (int i = 0; i < lenOfres; i++) {
-                //System.out.println("reskey:" +resKeys.get(i) + " - "+ resKeys.get(i).length());
-                //List<String> items = Arrays. asList(resKeys.get(i). split("\\s*,\\s*"));
-                List<String> items = Arrays. asList(resKeys.get(i). split(" *,  *"));
-                for (int j = 0; j < items.size(); j++){
-                    if(items.get(j).length()<2){
-                        res.remove(resKeys.get(i));}
-                    String stripped =  items.get(j).replaceAll("", " ");
-                    if(stripped.length()<=2){res.remove(resKeys.get(i));}
-                }
-                
-            }
-        List<String> resKeyss = new ArrayList<String>(res.keySet());
-        Integer lenOfress = resKeyss.size();
-        for (int i = 0; i < lenOfress; i++){    
-        if (resKeyss.get(i).length()<5)
-                {
-                    //System.out.println("reskey:" +resKeyss.get(i) + " - "+ resKeyss.get(i).length());
-                    res.remove(resKeyss.get(i));
-                }}
+        String space = result.replaceAll( "\\s+" , " ");
+        result = refined.toLowerCase().replaceAll(stopwordsRegex, " ");
+        HashMap<String, Integer> ngramsMap = ngrams(space.toString(),3);
+        //System.out.println(ngramsMap);
+        Set<String> toDelete = new HashSet<> ();
+        for (Map.Entry<String,Integer> e : ngramsMap.entrySet()) {
 
-        HashMap terms = sortedHashMapByValues(res);
-        //Object[] keyset = terms.keySet().toArray();
-        List<String> perms = new ArrayList<String>(terms.keySet());
-        //List<String> perms = (List<String>)(terms.keySet());
-        //String[] keys = terms.keySet().toArray(new String[0]);
+            if (e.getValue()<4){
+                //System.out.println("Less count -- Deleting key: " + e.getKey() + "count: "+ e.getValue());
+                toDelete.add(e.getKey());
+            }}
+
+        ngramsMap.keySet().removeAll(toDelete);
+        toDelete = new HashSet<>();
+        for (Map.Entry<String,Integer> e : ngramsMap.entrySet()) {
+            String[] wordList = e.getKey().split(" ");
+            if(wordList.length==1){
+                //System.out.println("monograms-- Deleting key: " + e.getKey() + " count: "+ e.getValue());
+                toDelete.add(e.getKey());
+            }
+            for (String s : wordList) {
+                s.replaceAll(" ", "");
+                if(s.length()<3){toDelete.add(e.getKey());
+                //System.out.println("letters present - Deleting key: " + e.getKey() + " count: "+ e.getValue());
+            }
+            }
+            
+        }
+        ngramsMap.keySet().removeAll(toDelete);
+        System.out.println("New " + ngramsMap);
+        List<String> perms = new ArrayList<String>(ngramsMap.keySet());
         Integer lenOfList = perms.size();
+        toDelete = new HashSet<> ();
         for (int i = 0; i < lenOfList; i++) {
             for (int j = i+1; j < lenOfList; j++){
                 //System.out.println(perms.get(i));
                 Double sc = score(perms.get(i),perms.get(j));
-                if(sc>0.5){
-                    System.out.println(perms.get(i)+','+perms.get(j)+':'+score(perms.get(i),perms.get(j)));
-                    terms.remove(perms.get(j));}
+                if(sc>0.6){
+                    String duplicate = perms.get(i);
+                    String duplicated = perms.get(j);
+                    //System.out.println(perms.get(i)+','+perms.get(j)+':'+score(perms.get(i),perms.get(j)));
+                    ngramsMap.put(duplicate,ngramsMap.get(duplicate) + ngramsMap.get(duplicated));
+                    //System.out.println("Duplicate entries, Deleting key: " + "duplicate : " + duplicate + "and duplicated :"+ duplicated);
+                    toDelete.add(perms.get(j));
+                }
             }
             }
-            System.out.println("Key words in the paper: \n"+ terms.toString());
-            String returnString = "Frequent words : \n"+ terms.toString();
-            return returnString;
-            //String s = terms.entrySet().stream().map(Object::toString).collect(joining("&"));
+        ngramsMap.keySet().removeAll(toDelete);
+        LinkedHashMap terms = sortedHashMapByValues(ngramsMap, 7);
+        System.out.println("Contains: "+ terms.toString());
+        String returnString = "Frequent words and counts: \n"+ terms.toString();
+        if(terms.isEmpty()){returnString = "";}
+        return returnString;
         }
 
     public static double score(String first, String second) {
@@ -293,7 +303,7 @@ public class LuceneReadIndexFeature1 {
         return map;
 
     }
-    private static HashMap sortedHashMapByValues(Map hashmap) {
+    private static LinkedHashMap sortedHashMapByValues(Map hashmap, Integer length) {
         // Create a TreeMap with a custom comparator to sort by values in descending order
         TreeMap<String, Integer> sortedMap = new TreeMap<>(new Comparator<String>() {
             @Override
@@ -308,9 +318,9 @@ public class LuceneReadIndexFeature1 {
 
         // Get the top 10 elements
         int count = 0;
-        HashMap<String, Integer> SortedList = new HashMap<String, Integer>();
+        LinkedHashMap<String, Integer> SortedList = new LinkedHashMap<String, Integer>();
         for (Map.Entry<String, Integer> entry : sortedMap.entrySet()) {
-            if (count < 11) {
+            if (count < length){
                 //System.out.println(entry.getKey() + ": " + entry.getValue());
                 SortedList.put(entry.getKey(),entry.getValue());
                 count++;
