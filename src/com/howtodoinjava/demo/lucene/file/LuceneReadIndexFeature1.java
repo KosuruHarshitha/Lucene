@@ -21,6 +21,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.*;
+import org.apache.lucene.search.suggest.analyzing.BlendedInfixSuggester;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import com.jgoodies.forms.layout.FormLayout;
