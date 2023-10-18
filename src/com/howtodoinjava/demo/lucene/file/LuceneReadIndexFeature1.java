@@ -16,11 +16,15 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.*;
+import org.apache.lucene.search.suggest.Lookup;
+import org.apache.lucene.search.suggest.analyzing.AnalyzingSuggester;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import com.jgoodies.forms.layout.FormLayout;
@@ -104,8 +108,7 @@ public class LuceneReadIndexFeature1 {
     
     // Create Index for the suggester
     private void createSuggesterIndex() {
-    	StandardAnalyzer analyzer = new StandardAnalyzer();
-    	//AnalyzingSuggester suggester = new AnalyzingSuggester(indexDir, analyzer);
+    	
     }
     
     // Create the IndexSearcher
@@ -174,7 +177,7 @@ public class LuceneReadIndexFeature1 {
             System.out.println("subTmpSection = " + subTmpSection);
             String keywordsString = getKeywords(document.get("contents"));
             //topResultsText[i] = keywordsString + subTmpSection + "\nFile #" + (i + 1) + " : " + getFilenameFromPath(path);
-            topResultsText[i] = "<html>" + keywordsString + "<br>" + subTmpSection + "<br>File #" + (i + 1) + " : " + getFilenameFromPath(path)+ "</html>";
+            topResultsText[i] = "<html>" + keywordsString + "<br>" + subTmpSection + "<br>File #" + (i + 1) + " : " + getFilenameFromPath(path)+  "<br>Score : " + sd.score +"</html>";
             resultDocuments[i++] = document.get("contents").toString();
             System.out.println("topResultsText[" + (i - 1) + "] = " + topResultsText[i - 1]);
         }
